@@ -5,6 +5,11 @@
 
 Pipeline::Pipeline(std::initializer_list<PipelineElement*> elements)
 {
+    assert(elements.size() > 0);
+
+    first = *elements.begin();
+    last = *(elements.end() - 1);
+
     int nPipes = elements.size() - 1;
     pipes = new fd_pair[nPipes];
 
@@ -12,6 +17,8 @@ Pipeline::Pipeline(std::initializer_list<PipelineElement*> elements)
         if (pipe(pipes[i]) == -1) {
             perror("pipe");
         }
+
+        qDebug() << "pipe" << pipes[i][0] << pipes[i][1];
     }
 
     int counter = 0;
@@ -23,9 +30,13 @@ Pipeline::Pipeline(std::initializer_list<PipelineElement*> elements)
 
         element->moveToThread(node);
         nodes.append(node);
+        node->start();
 
         counter++;
     }
+
+    // TODO Start nodes
+    connect(last, &PipelineElement::output, this, &PipelineElement::output);
 }
 
 Pipeline::~Pipeline()
@@ -38,17 +49,7 @@ Pipeline::~Pipeline()
     delete pipes;
 }
 
-void Pipeline::start()
+void Pipeline::input(unsigned char byte)
 {
-    for (PipelineNode *node : nodes) {
-        node->start();
-    }
+    first->input(byte);
 }
-
-void Pipeline::quit()
-{
-    for (PipelineNode *node : nodes) {
-        node->quit();
-    }
-}
-
