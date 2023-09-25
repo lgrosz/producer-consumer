@@ -6,6 +6,8 @@
 #include "pipeline_element.h"
 #include "pipeline_node.h"
 
+typedef int fd_pair[2];
+
 // TODO How cool would it be for a Pipeline to also be a PipelineElement? Then
 // you could insert a pipeline into a pipeline. Also.. maybe PipelineNode
 // should be private, so nobody can create one?
@@ -19,7 +21,7 @@ public:
     void quit();
 
 private:
-    int *pipes;
+    fd_pair *pipes;
     QList<PipelineNode*> nodes;
 
 };

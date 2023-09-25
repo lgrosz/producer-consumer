@@ -5,23 +5,26 @@
 
 Pipeline::Pipeline(std::initializer_list<PipelineElement*> elements)
 {
-    const int nPipes = elements.size() - 1;
-    int *pipes = new int(nPipes * 2);
-
-    qDebug() << "nPipes:" << nPipes;
+    int nPipes = elements.size() - 1;
+    pipes = new fd_pair[nPipes];
 
     for (int i = 0; i < nPipes; i++) {
-        pipe(pipes + i * 2 * sizeof(int));
+        if (pipe(pipes[i]) == -1) {
+            perror("pipe");
+        }
     }
 
     int counter = 0;
     for (PipelineElement *element : elements) {
-        PipelineNode *node = new PipelineNode(element, pipes[counter], pipes[counter + 1]);
+        int inFd = counter < 1 ? -1 : pipes[counter-1][0];
+        int outFd = counter < elements.size() - 1 ? pipes[counter][1] : -1;
+
+        PipelineNode *node = new PipelineNode(element, inFd, outFd);
 
         element->moveToThread(node);
         nodes.append(node);
 
-        counter = counter + 2;
+        counter++;
     }
 }
 
@@ -32,6 +35,7 @@ Pipeline::~Pipeline()
     }
 
     qDeleteAll(nodes);
+    delete pipes;
 }
 
 void Pipeline::start()
