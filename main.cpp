@@ -33,7 +33,6 @@ public:
     void produce(T t)
     {
         if (ok) {
-            qDebug() << "produce" << fd;
             write(fd, &t, sizeof(T));
         }
     }
@@ -83,13 +82,26 @@ public:
 
     bool consume(T *t)
     {
-        qDebug() << "consume" << fd;
         return read(fd, t, sizeof(T)) > 0;
     }
 
 private:
     bool ok;
     int fd;
+
+};
+
+// uhhhhh... no multiple inheritance...
+template <typename T>
+class ConsumerProducer : public QThread
+{
+
+public:
+    explicit ConsumerProducer(QObject *parent)
+        : QThread(parent)
+    {
+
+    }
 
 };
 
@@ -101,7 +113,7 @@ public:
     // I'm not a fan of having the producer and consumer inside the pipeline?
     // Should those be external and this class should provide methods for
     // writing and reading?
-    explicit Pipeline(Producer<T> &initial, Consumer<T> &final)
+    explicit Pipeline(Producer<T> &initial, Consumer<T> &final, std::initializer_list<ConsumerProducer<T> = { })
         : initial(initial), final(final)
     {
         int fd[2];
@@ -170,13 +182,10 @@ public:
         T t;
 
         int count = 0;
-        while (consumer.consume(&t)) {
+        while (this->consume(&t)) {
             qDebug() << ++count << t;
         }
     }
-
-private:
-    Consumer<T> consumer;
 
 };
 
@@ -184,7 +193,8 @@ int main(void)
 {
     RandomUIntProducer producer(10);
     Logger<int> consumer;
-    Pipeline<int> pipeline(producer, consumer);
+    Doubler<int> doubler;
+    Pipeline<int> pipeline(producer, consumer, { doubler });
     pipeline.run();
     return 0;
 }
