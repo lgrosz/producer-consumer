@@ -13,3 +13,8 @@ void PipelineElement::input(unsigned char byte)
     emit output(byte);
 }
 
+void PipelineElement::endInput()
+{
+    emit endOutput();
+}
+

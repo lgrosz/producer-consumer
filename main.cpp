@@ -29,13 +29,14 @@ int main(int argc, char **argv)
 {
     QCoreApplication a(argc, argv);
 
-    PipelineElement e1;
-    PipelineElement e2;
-    PipelineElement e3;
-    PipelinePlusOner e4;
-    PipelineDoubler e5;
+    PipelinePlusOner e1;
+    PipelineDoubler e2;
 
-    Pipeline pipeline { &e1, &e2, &e3, &e4, &e5 };
+    Pipeline pipeline { &e1, &e2 };
+
+    QObject::connect(&pipeline, &PipelineElement::output, [](unsigned char byte) { qDebug() << "Got" << byte; });
+
+    QObject::connect(&pipeline, &PipelineElement::endOutput, &a, &QCoreApplication::quit, Qt::QueuedConnection);
 
     for (int i = 0; i < 10; i++) {
         unsigned char c = QRandomGenerator::global()->bounded(10);
@@ -43,7 +44,7 @@ int main(int argc, char **argv)
         pipeline.input(c);
     }
 
-    QObject::connect(&pipeline, &PipelineElement::output, [](unsigned char byte) { qDebug() << "Got" << byte; });
+    pipeline.endInput();
 
     return a.exec();
 }

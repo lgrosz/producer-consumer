@@ -12,9 +12,11 @@ public:
 
 public slots:
     virtual void input(unsigned char);
+    virtual void endInput();
 
 signals:
     void output(unsigned char);
+    void endOutput();
 
 };
 

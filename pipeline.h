@@ -4,7 +4,6 @@
 #include <QList>
 #include <initializer_list>
 #include "pipeline_element.h"
-#include "pipeline_node.h"
 
 struct PipelineNodeContainer;
 
@@ -19,12 +18,11 @@ public:
     ~Pipeline();
 
     void input(unsigned char) override;
+    void endInput() override;
 
 private:
-    int readFd;
-    int writeFd;
+    PipelineElement root;
     QList<PipelineNodeContainer> nodes;
-    QSocketNotifier *readNotifier;
 
 };
 

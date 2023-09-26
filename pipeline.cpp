@@ -1,63 +1,33 @@
 #include "pipeline.h"
 #include <QDebug>
-
-#include <unistd.h>
-
-typedef int fd_pair[2];
+#include <QThread>
 
 struct PipelineNodeContainer
 {
     QThread *thread;
     PipelineElement *element;
-    PipelineNode *node;
 };
 
 Pipeline::Pipeline(std::initializer_list<PipelineElement*> elements)
 {
-    fd_pair left_pipe;
-    fd_pair right_pipe;
+    PipelineElement *previous = &root;
 
-    if (pipe(left_pipe) == -1) {
-        qWarning() << "Failed to create left pipe";
-    }
-
-    // In case there are no elements, then we will just let the pipe go through.
-    writeFd = left_pipe[1];
-
-    for (PipelineElement *element : elements) {
+    for (PipelineElement *current : elements) {
         QThread *thread = new QThread(this);
-
-        if (pipe(right_pipe) == -1) {
-            qWarning() << "Failed to create right pipe";
-        }
-
-        // Setup node to relay the input of the left pipe to the input of the
-        // element and to relay the output of the element to the output of the
-        // right pipe
-        PipelineNode *node = new PipelineNode(left_pipe[0], right_pipe[1]);
-        connect(node, &PipelineNode::readByte, element, &PipelineElement::input);
-        connect(element, &PipelineElement::output, node, &PipelineNode::writeByte);
-
-        element->moveToThread(thread);
-        node->moveToThread(thread);
+        current->moveToThread(thread);
         thread->start();
 
-        nodes.append({ thread, element, node });
+        connect(current, &PipelineElement::endOutput, thread, &QThread::quit, Qt::QueuedConnection);
+        connect(previous, &PipelineElement::output, current, &PipelineElement::input, Qt::QueuedConnection);
+        connect(previous, &PipelineElement::endOutput, current, &PipelineElement::endInput, Qt::QueuedConnection);
 
-        // Right pipe is the left pipe for the next pass
-        memcpy(left_pipe, right_pipe, 2 * sizeof(int));
+        nodes.append({ thread, current });
+
+        previous = current;
     }
 
-    readFd = left_pipe[0];
-    readNotifier = new QSocketNotifier(readFd, QSocketNotifier::Read, this);
-    connect(readNotifier, &QSocketNotifier::activated, [&]() {
-        unsigned char byte;
-        if (read(readFd, &byte, 1) < 1) {
-            qWarning() << "Failed to read byte";
-        }
-
-        emit output(byte);
-    });
+    connect(previous, &PipelineElement::output, this, &PipelineElement::output);
+    connect(previous, &PipelineElement::endOutput, this, &PipelineElement::endOutput);
 }
 
 Pipeline::~Pipeline()
@@ -71,7 +41,10 @@ Pipeline::~Pipeline()
 
 void Pipeline::input(unsigned char byte)
 {
-    if (write(writeFd, &byte, 1) < 1) {
-        qWarning() << "Failed to write";
-    }
+    root.input(byte);
+}
+
+void Pipeline::endInput()
+{
+    root.endInput();
 }

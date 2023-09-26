@@ -18,7 +18,6 @@ find_package(Qt5 COMPONENTS Core Gui REQUIRED)
 add_executable(helloworld
     main.cpp
     pipeline.cpp
-    pipeline_node.cpp
     pipeline_element.cpp
 )
 
