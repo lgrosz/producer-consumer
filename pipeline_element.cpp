@@ -8,7 +8,7 @@ PipelineElement::PipelineElement(QObject *parent)
 
 }
 
-void PipelineElement::input(unsigned char byte)
+void PipelineElement::input(QByteArray byte)
 {
     emit output(byte);
 }

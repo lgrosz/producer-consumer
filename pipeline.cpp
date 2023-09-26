@@ -39,7 +39,7 @@ Pipeline::~Pipeline()
     // TODO Cleanup threads?
 }
 
-void Pipeline::input(unsigned char byte)
+void Pipeline::input(QByteArray byte)
 {
     root.input(byte);
 }

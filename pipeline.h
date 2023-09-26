@@ -17,7 +17,7 @@ public:
     Pipeline(std::initializer_list<PipelineElement*>);
     ~Pipeline();
 
-    void input(unsigned char) override;
+    void input(QByteArray) override;
     void endInput() override;
 
 private:
