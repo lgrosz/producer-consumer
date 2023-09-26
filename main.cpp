@@ -14,10 +14,12 @@ int main(int argc, char **argv)
     Pipeline pipeline { &e1, &e2, &e3 };
 
     for (int i = 0; i < 10; i++) {
-        pipeline.input('A' + (QRandomGenerator::global()->bounded(26)));
+        unsigned char c = 'A' + (QRandomGenerator::global()->bounded(26));
+        qDebug() << "Inputting" << c;
+        pipeline.input(c);
     }
 
-    QObject::connect(&pipeline, &PipelineElement::output, [](unsigned char byte) { qDebug() << byte; });
+    QObject::connect(&pipeline, &PipelineElement::output, [](unsigned char byte) { qDebug() << "Got" << byte; });
 
-    return 0;
+    return a.exec();
 }

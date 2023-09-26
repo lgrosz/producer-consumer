@@ -7,22 +7,22 @@
 
 class PipelineElement;
 
-class PipelineNode : public QThread
+class PipelineNode : public QObject
 {
     Q_OBJECT
 
 public:
-    PipelineNode(PipelineElement *, int, int, QObject * = nullptr);
+    PipelineNode(int, int, QObject * = nullptr);
 
-    //void run() override;
+public slots:
+    void writeByte(unsigned char);
 
-private slots:
-    void readSocket(int);
+signals:
+    void readByte(unsigned char);
 
 private:
-    PipelineElement *element;
-    QSocketNotifier *in_notifier;
-    int out_fd;
+    QSocketNotifier readSocketNotifier;
+    int writeFd;
 
 };
 

@@ -6,7 +6,7 @@
 #include "pipeline_element.h"
 #include "pipeline_node.h"
 
-typedef int fd_pair[2];
+struct PipelineNodeContainer;
 
 // TODO How cool would it be for a Pipeline to also be a PipelineElement? Then
 // you could insert a pipeline into a pipeline. Also.. maybe PipelineNode
@@ -21,10 +21,10 @@ public:
     void input(unsigned char) override;
 
 private:
-    PipelineElement *first;
-    PipelineElement *last;
-    fd_pair *pipes;
-    QList<PipelineNode*> nodes;
+    int readFd;
+    int writeFd;
+    QList<PipelineNodeContainer> nodes;
+    QSocketNotifier *readNotifier;
 
 };
 
